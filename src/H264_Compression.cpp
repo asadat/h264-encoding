@@ -18,16 +18,20 @@ void H264_Compression::Init(const char* file)
         return;
 
     namedWindow("H264",1);
+    int n=0;
+    while(cap.read(frames[n++]));
+    n--;
 
-    Mat frame;
-    while(cap.read(frame))
+    printf("%d frames.\n", n);
+
+    for(int i=0; i<n; i++)
     {
-        imshow("H264", frame);
+        imshow("H264", frames[i]);
         if(waitKey(30) >= 0) break;
     }
 
-
     cap.release();
+
 }
 
 

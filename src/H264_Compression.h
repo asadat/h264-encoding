@@ -11,5 +11,6 @@ public:
 private:
     void Init(const char* file);
 
+    Mat frames[1000];
     VideoCapture cap;
 };
