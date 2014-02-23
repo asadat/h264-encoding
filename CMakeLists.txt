@@ -2,9 +2,11 @@ cmake_minimum_required(VERSION 2.4.6 FATAL_ERROR)
 
 SET(ProjName h264)
 
+include_directories("/usr/include")
 include_directories("/usr/local/include")
 include_directories("./src")
 
+link_directories("/usr/lib")
 link_directories("/usr/local/lib")
 
 set(h264_LIBRARIES opencv_core opencv_video opencv_highgui opencv_imgproc opencv_contrib)
