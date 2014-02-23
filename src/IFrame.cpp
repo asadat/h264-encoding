@@ -1,4 +1,5 @@
 #include "IFrame.h"
+#include <stdio.h>
 
 IFrame::IFrame(): nextIF(NULL), previousIF(NULL)
 {
@@ -185,7 +186,7 @@ void IFrame::Intra4x4Prediction()
                 }
 
                 intraPred[n].at<uchar>(i/4,j/4) = min;
-
+/*
                 if(min == 1)
                 {
                     //printf("31\n");
@@ -204,7 +205,7 @@ void IFrame::Intra4x4Prediction()
 
                     mver.copyTo(yuv[n].colRange(j,j+4).rowRange(i,i+4));
                 }
-                //printf("34\n");
+  */              //printf("34\n");
 
             }
 

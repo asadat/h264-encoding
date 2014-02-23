@@ -1,5 +1,5 @@
 #include "H264_Compression.h"
-
+#include <stdio.h>
 H264_Compression::H264_Compression(const char* file)
 {
     Init(file);
