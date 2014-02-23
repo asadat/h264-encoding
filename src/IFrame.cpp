@@ -107,13 +107,13 @@ void IFrame::Intra4x4Prediction()
                     int mean =0;
                     for(int ii=0; ii<4; ii++)
                     {
-                        printf("%u\t%u\t",yuv[n].at<uchar>(i-1,j+ii),yuv[n].at<uchar>(i+ii,j-1));
-                        mean += (int)yuv[n].at<uchar>(i-1,j+ii);
-                        mean += (int)yuv[n].at<uchar>(i+ii,j-1);
+                        printf("%u\t%u\t[%u]\t",yuv[n].at<uchar>(i-1,j+ii),yuv[n].at<uchar>(i+ii,j-1),mean);
+                        mean += (unsigned int)yuv[n].at<uchar>(i-1,j+ii);
+                        mean += (unsigned int)yuv[n].at<uchar>(i+ii,j-1);
                     }
 
 
-                    printf("\n%d\t\n", mean);
+                    //printf("\n%f\t\n", mean);
                     mdc = mean * Mat::ones(4,4,CV_8UC1) - yuv[n].rowRange(i,i+4).colRange(j,j+4);
                    //Scalar sv_dc =  cv::sum(cv::abs( mdc ));
                    //v_dc = sv_dc[0];
