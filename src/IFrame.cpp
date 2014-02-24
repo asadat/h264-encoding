@@ -4,6 +4,20 @@
 
 using namespace TooN;
 
+Matrix<6,3,double> V = Data(10, 16, 13,
+                         11, 18, 14,
+                         13, 20, 16,
+                         14, 23, 18,
+                         16, 25, 20,
+                         18, 29, 23);
+
+Matrix<6,3,double> M = Data(13107, 5243, 8066,
+                         11916, 4660, 7490,
+                         10082, 4194, 6554,
+                         9363 , 3647, 5825,
+                         8192 , 3355, 5243,
+                         7282 , 2893, 4559);
+
 IFrame::IFrame(): nextIF(NULL), previousIF(NULL)
 {
 
@@ -260,7 +274,7 @@ void IFrame::Intra4x4Prediction()
                 }
                 //printf("34\n");
 
-                IntegerTransform(n,i,j,0);
+                IntegerTransform(n,i,j,20);
             }
 
     printf("I predictionending....\n");
@@ -314,7 +328,7 @@ void IFrame::Intra4x4PredictionInverse()
         for(int i=0; i<yuv[n].rows; i+=bs)
             for(int j=0; j<yuv[n].cols; j+=bs)
             {
-                IntegerTransformInverse(n, i , j, 0);
+                IntegerTransformInverse(n, i , j, 20);
 
                 if(intraPred[n].at<uchar>(i/bs,j/bs) == 0)
                 {
@@ -377,7 +391,9 @@ void IFrame::Intra4x4PredictionInverse()
         {
             for(int jj=0; jj<yuv[i].cols; jj++)
             {
-                yuv[i].at<uchar>(ii,jj)  = static_cast<unsigned char>(pmyuv[i][ii][jj]);
+                int f = pmyuv[i][ii][jj];
+                f = (f<0)?0:((f>255)?255:f);
+                yuv[i].at<uchar>(ii,jj)  = static_cast<unsigned char>(f);
                 //printf("(%d,%f)\t", tmp[ii][jj], yuv_[i].at<float>(ii,jj));
             }
            //printf("\n");
@@ -400,23 +416,94 @@ void IFrame::IntegerTransform(int n, int i, int j, int QP)
                 1,  -2, 2,  -1
                 );
 
-    Matrix<4,4, int> tmp = c*pmyuv[n].slice(i,j,4,4)*c.T();
-    pmyuv[n].slice(i,j,4,4)= tmp;
 
+    Matrix<4,4,float> Mf = Data(
+                M[QP%6][0]/pow(2,floor(QP/6)), M[QP%6][2]/pow(2,floor(QP/6)), M[QP%6][0]/pow(2,floor(QP/6)), M[QP%6][2]/pow(2,floor(QP/6)),
+                M[QP%6][2]/pow(2,floor(QP/6)), M[QP%6][1]/pow(2,floor(QP/6)), M[QP%6][2]/pow(2,floor(QP/6)), M[QP%6][1]/pow(2,floor(QP/6)),
+                M[QP%6][0]/pow(2,floor(QP/6)), M[QP%6][2]/pow(2,floor(QP/6)), M[QP%6][0]/pow(2,floor(QP/6)), M[QP%6][2]/pow(2,floor(QP/6)),
+                M[QP%6][2]/pow(2,floor(QP/6)), M[QP%6][1]/pow(2,floor(QP/6)), M[QP%6][2]/pow(2,floor(QP/6)), M[QP%6][1]/pow(2,floor(QP/6))
+                );
+
+    Matrix<4,4, int> tmp = (c*(pmyuv[n].slice(i,j,4,4)*c.T()));
+
+    for(int ii=0; ii<tmp.num_rows(); ii++)
+       for(int jj=0; jj<tmp.num_cols(); jj++)
+       {
+           int val = tmp[ii][jj]*Mf[ii][jj];
+           val = val >> 15;
+           tmp[ii][jj] = val;
+       }
+
+
+
+    if(n==1 && i/4==15 && j/4==15)
+    {
+        printf("\n Raw:\n");
+        for(int ii=0; ii<tmp.num_rows(); ii++)
+        {
+            for(int jj=0; jj<tmp.num_cols(); jj++)
+                printf("%d\t", pmyuv[n][i+ii][j+jj]);
+            printf("\n");
+        }
+
+        printf("\n Encoded:\n");
+        for(int ii=0; ii<tmp.num_rows(); ii++)
+        {
+            for(int jj=0; jj<tmp.num_cols(); jj++)
+                printf("%d\t", tmp[ii][jj]);
+            printf("\n");
+        }
+    }
+
+      pmyuv[n].slice(i,j,4,4)= tmp;
 }
 
 void IFrame::IntegerTransformInverse(int n, int i, int j, int QP)
 {
-    Matrix<4> c = Data(
-                1,  1,  1,  1,
-                1,  0.5,    -0.5,   -1,
-                1,  -1, -1, 1,
-                0.5,    -1, 1,  -0.5
+    Matrix<4,4,double> c = Data(
+                1,      1,      1,      1,
+                1,      0.5,    -0.5,   -1,
+                1,      -1,     -1,     1,
+                0.5,    -1,     1,      -0.5
                 );
 
-    //Matrix<4,4, int> d =
-    Matrix<4,4, int> tmp = c.T()*pmyuv[n].slice(i,j,4,4)*c;
+    Matrix<4,4,float> Vf = Data(
+                V[QP%6][0]*pow(2,floor(QP/6)), V[QP%6][2]*pow(2,floor(QP/6)), V[QP%6][0]*pow(2,floor(QP/6)), V[QP%6][2]*pow(2,floor(QP/6)),
+                V[QP%6][2]*pow(2,floor(QP/6)), V[QP%6][1]*pow(2,floor(QP/6)), V[QP%6][2]*pow(2,floor(QP/6)), V[QP%6][1]*pow(2,floor(QP/6)),
+                V[QP%6][0]*pow(2,floor(QP/6)), V[QP%6][2]*pow(2,floor(QP/6)), V[QP%6][0]*pow(2,floor(QP/6)), V[QP%6][2]*pow(2,floor(QP/6)),
+                V[QP%6][2]*pow(2,floor(QP/6)), V[QP%6][1]*pow(2,floor(QP/6)), V[QP%6][2]*pow(2,floor(QP/6)), V[QP%6][1]*pow(2,floor(QP/6))
+                );
+
+    Matrix<4,4, float> tmp1;
+    for(int ii=0; ii<4; ii++)
+       for(int jj=0; jj<4; jj++)
+       {
+           tmp1[ii][jj] = pmyuv[n][i+ii][j+jj]*Vf[ii][jj];
+       }
+
+    Matrix<4,4, int> tmp = (1.0/64.0)*(c.T()*(tmp1*c));
+
+
     pmyuv[n].slice(i,j,4,4) = tmp;
+
+    if(n==1 && i/4==15 && j/4==15)
+    {
+        printf("\n Decoded:\n");
+        for(int ii=0; ii<tmp.num_rows(); ii++)
+        {
+            for(int jj=0; jj<tmp.num_cols(); jj++)
+                printf("%d\t", tmp[ii][jj]);
+            printf("\n");
+        }
+
+        printf("\n Vf:\n");
+        for(int ii=0; ii<tmp.num_rows(); ii++)
+        {
+            for(int jj=0; jj<tmp.num_cols(); jj++)
+                printf("%f\t", Vf[ii][jj]);
+            printf("\n");
+        }
+    }
 }
 
 int IFrame::sumAbs(Matrix<4,4,int> &m)

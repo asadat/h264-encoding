@@ -24,13 +24,13 @@ public:
 
     int sumAbs(Matrix<4,4,int> &m);
     void printfMat(Mat m, bool ischar=false);
-
-        Mat img;
-        IFrame* nextIF;
-        IFrame* previousIF;
-        Mat yuv[3];
-        Matrix<1000,1000,int> pmyuv[3];
-        Mat intraPred[3];
-
 private:
+    Mat img;
+    IFrame* nextIF;
+    IFrame* previousIF;
+    Mat yuv[3];
+    Matrix<1000,1000,int> pmyuv[3];
+    Mat intraPred[3];
+
+
 };
