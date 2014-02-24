@@ -4,6 +4,11 @@
 
 using namespace TooN;
 
+Matrix<4,4,float> IFrame::Mf;
+Matrix<4,4,float> IFrame::Vf;
+
+int IFrame::m_QP;
+
 Matrix<6,3,double> V = Data(10, 16, 13,
                          11, 18, 14,
                          13, 20, 16,
@@ -20,7 +25,8 @@ Matrix<6,3,double> M = Data(13107, 5243, 8066,
 
 IFrame::IFrame(): nextIF(NULL), previousIF(NULL)
 {
-
+    m_QP =5;
+    ChangeQP(m_QP);
 }
 
 IFrame::~IFrame()
@@ -406,6 +412,25 @@ void IFrame::Intra4x4PredictionInverse()
 //    yuv_[2].convertTo(yuv[2], CV_8UC1);
 }
 
+void IFrame::ChangeQP(int qp)
+{
+    int QP = qp;
+    m_QP = qp;
+    Mf = Data(
+                M[QP%6][0]/pow(2,floor(QP/6)), M[QP%6][2]/pow(2,floor(QP/6)), M[QP%6][0]/pow(2,floor(QP/6)), M[QP%6][2]/pow(2,floor(QP/6)),
+                M[QP%6][2]/pow(2,floor(QP/6)), M[QP%6][1]/pow(2,floor(QP/6)), M[QP%6][2]/pow(2,floor(QP/6)), M[QP%6][1]/pow(2,floor(QP/6)),
+                M[QP%6][0]/pow(2,floor(QP/6)), M[QP%6][2]/pow(2,floor(QP/6)), M[QP%6][0]/pow(2,floor(QP/6)), M[QP%6][2]/pow(2,floor(QP/6)),
+                M[QP%6][2]/pow(2,floor(QP/6)), M[QP%6][1]/pow(2,floor(QP/6)), M[QP%6][2]/pow(2,floor(QP/6)), M[QP%6][1]/pow(2,floor(QP/6))
+                );
+
+   Vf = Data(
+                V[QP%6][0]*pow(2,floor(QP/6)), V[QP%6][2]*pow(2,floor(QP/6)), V[QP%6][0]*pow(2,floor(QP/6)), V[QP%6][2]*pow(2,floor(QP/6)),
+                V[QP%6][2]*pow(2,floor(QP/6)), V[QP%6][1]*pow(2,floor(QP/6)), V[QP%6][2]*pow(2,floor(QP/6)), V[QP%6][1]*pow(2,floor(QP/6)),
+                V[QP%6][0]*pow(2,floor(QP/6)), V[QP%6][2]*pow(2,floor(QP/6)), V[QP%6][0]*pow(2,floor(QP/6)), V[QP%6][2]*pow(2,floor(QP/6)),
+                V[QP%6][2]*pow(2,floor(QP/6)), V[QP%6][1]*pow(2,floor(QP/6)), V[QP%6][2]*pow(2,floor(QP/6)), V[QP%6][1]*pow(2,floor(QP/6))
+                );
+
+}
 
 void IFrame::IntegerTransform(int n, int i, int j, int QP)
 {
@@ -417,12 +442,7 @@ void IFrame::IntegerTransform(int n, int i, int j, int QP)
                 );
 
 
-    Matrix<4,4,float> Mf = Data(
-                M[QP%6][0]/pow(2,floor(QP/6)), M[QP%6][2]/pow(2,floor(QP/6)), M[QP%6][0]/pow(2,floor(QP/6)), M[QP%6][2]/pow(2,floor(QP/6)),
-                M[QP%6][2]/pow(2,floor(QP/6)), M[QP%6][1]/pow(2,floor(QP/6)), M[QP%6][2]/pow(2,floor(QP/6)), M[QP%6][1]/pow(2,floor(QP/6)),
-                M[QP%6][0]/pow(2,floor(QP/6)), M[QP%6][2]/pow(2,floor(QP/6)), M[QP%6][0]/pow(2,floor(QP/6)), M[QP%6][2]/pow(2,floor(QP/6)),
-                M[QP%6][2]/pow(2,floor(QP/6)), M[QP%6][1]/pow(2,floor(QP/6)), M[QP%6][2]/pow(2,floor(QP/6)), M[QP%6][1]/pow(2,floor(QP/6))
-                );
+
 
     Matrix<4,4, int> tmp = (c*(pmyuv[n].slice(i,j,4,4)*c.T()));
 
@@ -436,7 +456,7 @@ void IFrame::IntegerTransform(int n, int i, int j, int QP)
 
 
 
-    if(n==1 && i/4==15 && j/4==15)
+    if(false && n==1 && i/4==15 && j/4==15)
     {
         printf("\n Raw:\n");
         for(int ii=0; ii<tmp.num_rows(); ii++)
@@ -467,12 +487,6 @@ void IFrame::IntegerTransformInverse(int n, int i, int j, int QP)
                 0.5,    -1,     1,      -0.5
                 );
 
-    Matrix<4,4,float> Vf = Data(
-                V[QP%6][0]*pow(2,floor(QP/6)), V[QP%6][2]*pow(2,floor(QP/6)), V[QP%6][0]*pow(2,floor(QP/6)), V[QP%6][2]*pow(2,floor(QP/6)),
-                V[QP%6][2]*pow(2,floor(QP/6)), V[QP%6][1]*pow(2,floor(QP/6)), V[QP%6][2]*pow(2,floor(QP/6)), V[QP%6][1]*pow(2,floor(QP/6)),
-                V[QP%6][0]*pow(2,floor(QP/6)), V[QP%6][2]*pow(2,floor(QP/6)), V[QP%6][0]*pow(2,floor(QP/6)), V[QP%6][2]*pow(2,floor(QP/6)),
-                V[QP%6][2]*pow(2,floor(QP/6)), V[QP%6][1]*pow(2,floor(QP/6)), V[QP%6][2]*pow(2,floor(QP/6)), V[QP%6][1]*pow(2,floor(QP/6))
-                );
 
     Matrix<4,4, float> tmp1;
     for(int ii=0; ii<4; ii++)
@@ -486,7 +500,7 @@ void IFrame::IntegerTransformInverse(int n, int i, int j, int QP)
 
     pmyuv[n].slice(i,j,4,4) = tmp;
 
-    if(n==1 && i/4==15 && j/4==15)
+    if(false && n==1 && i/4==15 && j/4==15)
     {
         printf("\n Decoded:\n");
         for(int ii=0; ii<tmp.num_rows(); ii++)

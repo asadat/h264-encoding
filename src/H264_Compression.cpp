@@ -33,8 +33,8 @@ void H264_Compression::Init(const char* file)
     namedWindow("H264", CV_WINDOW_AUTOSIZE | CV_GUI_NORMAL);
     namedWindow("raw", CV_WINDOW_AUTOSIZE | CV_GUI_NORMAL);
 
-//    cv::createTrackbar("track1", "H264", &val, 100);
-//    cv::createButton("button1", H264_Compression::playBtn,NULL,CV_CHECKBOX,0);
+   cv::createTrackbar("QP:", "H264", &val, 100);
+   //cv::createButton("button1", H264_Compression::playBtn,NULL);
 
     IFrame * ifr = new IFrame();
     int n=0;
@@ -60,6 +60,7 @@ void H264_Compression::Init(const char* file)
 
     for(int i=0; i<iframes.size(); i++)
     {
+        IFrame::ChangeQP(val);
         iframes[i]->Convert2YUV();
         iframes[i]->Intra4x4Prediction();
         iframes[i]->Intra4x4PredictionInverse();

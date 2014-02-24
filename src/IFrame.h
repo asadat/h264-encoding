@@ -22,15 +22,19 @@ public:
     void SetImage(Mat &image);
     Mat * getImage(){return &img;}
 
+    static void ChangeQP(int qp);
     int sumAbs(Matrix<4,4,int> &m);
     void printfMat(Mat m, bool ischar=false);
 private:
+
+    static Matrix<4,4,float> Mf;
+    static Matrix<4,4,float> Vf;
     Mat img;
     IFrame* nextIF;
     IFrame* previousIF;
     Mat yuv[3];
     Matrix<1000,1000,int> pmyuv[3];
     Mat intraPred[3];
-
+    static int m_QP;
 
 };
