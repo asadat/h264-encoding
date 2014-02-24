@@ -1,5 +1,8 @@
 #include "IFrame.h"
 #include <stdio.h>
+#include "TooN/TooN.h"
+
+using namespace TooN;
 
 IFrame::IFrame(): nextIF(NULL), previousIF(NULL)
 {
@@ -67,13 +70,41 @@ void IFrame::SetImage(Mat &image)
 
 void IFrame::Intra4x4Prediction()
 {
-    intraPred[0] = Mat::zeros(yuv[0].rows/4, yuv[0].cols/4, CV_8UC1);
-    intraPred[1] = Mat::zeros(yuv[1].rows/4, yuv[1].cols/4, CV_8UC1);
-    intraPred[2] = Mat::zeros(yuv[2].rows/4, yuv[2].cols/4, CV_8UC1);
+//    Mat yuv_[3];
+//    yuv[0].convertTo(yuv_[0], CV_32FC1);
+//    yuv[1].convertTo(yuv_[1], CV_32FC1);
+//    yuv[2].convertTo(yuv_[2], CV_32FC1);
 
-    for(int n =0; n<1; n++)
-        for(int i=0; i< yuv[n].rows; i+=4)
-            for(int j=0; j< yuv[n].cols; j+=4)
+    Matrix<1000,1000,int> myuv[3];
+
+
+    for(int i=0; i< 3; i++)
+    {
+        //Matrix<1000,1,int> tmp(yuv[i].rows, yuv[i].cols);
+        for(int ii=0; ii<yuv[i].rows; ii++)
+        {
+            for(int jj=0; jj<yuv[i].cols; jj++)
+            {
+                myuv[i][ii][jj] = (int)yuv[i].at<uchar>(ii,jj);
+                //printf("(%d,%f)\t", tmp[ii][jj], yuv_[i].at<float>(ii,jj));
+            }
+           //printf("\n");
+        }
+        //myuv[i] = tmp;
+    }
+
+//    printfMat(yuv[2].colRange(4,8).rowRange(4,8), true);
+//    printf("***** \n\n");
+//    printfMat(yuv_[2].colRange(4,8).rowRange(4,8));
+//    exit(0);
+    int bs = 4;
+    intraPred[0] = Mat::zeros(yuv[0].rows/bs, yuv[0].cols/bs, CV_8UC1);
+    intraPred[1] = Mat::zeros(yuv[1].rows/bs, yuv[1].cols/bs, CV_8UC1);
+    intraPred[2] = Mat::zeros(yuv[2].rows/bs, yuv[2].cols/bs, CV_8UC1);
+
+    for(int n =0; n<3; n++)
+        for(int i=0; i< yuv[n].rows; i+=bs)
+            for(int j=0; j< yuv[n].cols; j+=bs)
             {
                 bool hor=false, ver=false, dc = false;
 
@@ -90,59 +121,50 @@ void IFrame::Intra4x4Prediction()
 
                 int min=0;
 
-                Mat mdc,mver,mhor;
+
+                Matrix<4,4,int> mdc,mver,mhor;
+
+                int mean =0;
                 //printf("1\n");
                 if(dc)
                 {
-//                     printf("\n");
-//                    for(int ii=0; ii<4; ii++)
-//                    {
-//                        int mm = 0;
-//                        for(int jj=0; jj<4; jj++)
-//                        {
-//                            mm += (int)yuv[n].at<uchar>(i+ii,j+jj);
-//                            printf("%u \t", yuv[n].at<uchar>(i+ii,j+jj));
-//                        }
-//                        printf(" \t%d\n", mm);
-//                    }
-                    int mean =0;
-                    for(int ii=0; ii<4; ii++)
+
+                    // printf("\n Mean start: ");
+                    for(int ii=0; ii<bs; ii++)
                     {
-                        printf("%u\t%u\t[%u]\t",yuv[n].at<uchar>(i-1,j+ii),yuv[n].at<uchar>(i+ii,j-1),mean);
-                        mean += (unsigned int)yuv[n].at<uchar>(i-1,j+ii);
-                        mean += (unsigned int)yuv[n].at<uchar>(i+ii,j-1);
+//                        int b = 15;
+//                        if(i/bs == b & j/bs == b && n==0)
+//                            printf("%d\t%d\t",myuv[n][i-1][j+ii], myuv[n][i+ii][j-1]);
+                        //printf("%d\t%d\t",myuv[n][i-1][j+ii],myuv[n][i+ii][j-1]);
+                        mean += myuv[n][i-1][j+ii];
+                        mean += myuv[n][i+ii][j-1];
                     }
 
+                    mean = mean/(2*bs);
+                   // printf("\nmean: %d\t\n", mean);
+                    Matrix<4,4,int> meanmat = mean * TooN::Ones(bs,bs);
+                    //printf("MeanMat:");
+                    //printfMat(meanmat);
 
-                    //printf("\n%f\t\n", mean);
-                    mdc = mean * Mat::ones(4,4,CV_8UC1) - yuv[n].rowRange(i,i+4).colRange(j,j+4);
-                   //Scalar sv_dc =  cv::sum(cv::abs( mdc ));
-                   //v_dc = sv_dc[0];
+                   // printf("here1");
+                    mdc = myuv[n].slice(i,j,bs,bs) - meanmat;
+                   // printf("here2");
+
+                    //Scalar sv_dc =  cv::sum(cv::abs( mdc ));
+                    v_dc = sumAbs(mdc);
 
                    min = 1;
                 }
                 //printf("2\n");
                 if(hor)
                 {
-                    Mat m = Mat::zeros(4,4,CV_8UC1);
-                    for(int ii=0; ii<4; ii++)
-                        for(int jj=0; jj<4; jj++)
-                            m.at<uchar>(ii,jj) = yuv[n].at<uchar>(i+ii,j-1);
+                   Matrix<4,4,int> m;
+                    for(int ii=0; ii<bs; ii++)
+                        for(int jj=0; jj<bs; jj++)
+                            m[ii][jj] = myuv[n][i+ii][j-1];
 
-                    //m.at<uchar>(0,0) = m.at<uchar>(0,1) = m.at<uchar>(0,2) = m.at<uchar>(0,3) = yuv[n].at<uchar>(i,j-1);
-                    //m.at<uchar>(1,0) = m.at<uchar>(1,1) = m.at<uchar>(1,2) = m.at<uchar>(1,3) = yuv[n].at<uchar>(i+1,j-1);
-                    //m.at<uchar>(2,0) = m.at<uchar>(2,1) = m.at<uchar>(2,2) = m.at<uchar>(2,3) = yuv[n].at<uchar>(i+2,j-1);
-                    //m.at<uchar>(3,0) = m.at<uchar>(3,1) = m.at<uchar>(3,2) = m.at<uchar>(3,3) = yuv[n].at<uchar>(i+3,j-1);
-                    //printf("21\n");
-                    //printf("%d %d %d %d \n", m.rows, m.cols, yuv[n].rowRange(i,i+3).colRange(j,j+3).rows, yuv[n].rowRange(i,i+3).colRange(j,j+3).cols);
-                    mhor = m - yuv[n].rowRange(i,i+4).colRange(j,j+4);
-                    //printf("22\n");
-
-                    Scalar sv_hor = cv::sum(cv::abs( mhor ));
-                    //printf("23\n");
-
-                    v_hor = sv_hor[0];
-                    //printf("24\n");
+                    mhor = myuv[n].slice(i,j,bs,bs) - m;
+                    v_hor = sumAbs(mhor);
 
                     if(min ==1 && v_dc > v_hor )
                     {
@@ -158,18 +180,13 @@ void IFrame::Intra4x4Prediction()
                 if(ver)
                 {
                    // Mat m = Mat::zeros(4,4,CV_8UC1);
-                    Mat m = Mat::zeros(4,4,CV_8UC1);
-                    for(int ii=0; ii<4; ii++)
-                        for(int jj=0; jj<4; jj++)
-                            m.at<uchar>(ii,jj) = yuv[n].at<uchar>(i-1,j+jj);
+                    Matrix<4,4,int> m;
+                    for(int ii=0; ii<bs; ii++)
+                        for(int jj=0; jj<bs; jj++)
+                            m[ii][jj] = myuv[n][i-1][j+jj];
 
-                    //m.at<uchar>(0,0) = m.at<uchar>(1,0) = m.at<uchar>(2,0) = m.at<uchar>(3,0) = yuv[n].at<uchar>(i-1,j);
-                    //m.at<uchar>(0,1) = m.at<uchar>(1,1) = m.at<uchar>(2,1) = m.at<uchar>(3,1) = yuv[n].at<uchar>(i-1,j+1);
-                    //m.at<uchar>(0,2) = m.at<uchar>(1,2) = m.at<uchar>(2,2) = m.at<uchar>(3,2) = yuv[n].at<uchar>(i-1,j+2);
-                    //m.at<uchar>(0,3) = m.at<uchar>(1,3) = m.at<uchar>(2,3) = m.at<uchar>(3,3) = yuv[n].at<uchar>(i-1,j+3);
-                    mver = m - yuv[n].rowRange(i,i+4).colRange(j,j+4);
-                    Scalar sv_ver = cv::sum(cv::abs( mver ));
-                    v_ver = sv_ver[0];
+                    mver = myuv[n].slice(i,j,bs,bs) - m;
+                    v_ver = sumAbs(mver);
 
                     if(min == 1 && v_dc > v_ver)
                     {
@@ -185,29 +202,243 @@ void IFrame::Intra4x4Prediction()
                     }
                 }
 
-                intraPred[n].at<uchar>(i/4,j/4) = min;
-/*
-                if(min == 1)
+                intraPred[n].at<uchar>(i/bs,j/bs) = min;
+
+                if(min == 0)
+                {
+//                    for(int iii=0; iii<4; iii++)
+//                    {
+//                        for(int jjj=0; jjj<4; jjj++)
+//                        {
+//                            pmyuv[n][i+iii][j+jjj] = myuv[n][i+iii][j+jjj];
+//                        }
+//                    }
+
+                    pmyuv[n].slice(i,j,bs,bs) = myuv[n].slice(i,j,bs,bs);
+                }
+                else if(min == 1)
                 {
                     //printf("31\n");
 
-                    mdc.copyTo(yuv[n].colRange(j,j+4).rowRange(i,i+4) );
+
+                    //printf("DC:");
+                    //printfMat(mdc);
+
+                   // printf("Before Frame:\n");
+                    //printfMat(yuv_[n].colRange(j,j+bs).rowRange(i,i+bs));
+//                    int b = 15;
+//                    if(i/bs == b & j/bs == b && n==0)
+//                        printf("**B 5 : mean:%d \n", mean);
+
+//                    for(int iii=0; iii<4; iii++)
+//                    {
+//                        for(int jjj=0; jjj<4; jjj++)
+//                        {
+//                            pmyuv[n][i+iii][j+jjj] = mdc[iii][jjj];
+//                        }
+//                    }
+                    pmyuv[n].slice(i,j,bs,bs) = mdc;
+                   // yuv_[n].colRange(j,j+bs).rowRange(i,i+bs) = mdc;
+                    //yuv_[n].colRange(j,j+bs).rowRange(i,i+bs)= mdc;//Mat::zeros(bs,bs, CV_8UC1);
+
+                    //printf("After Frame:\n");
+                    //printfMat(yuv_[n].colRange(j,j+bs).rowRange(i,i+bs));
                 }
                 else if(min == 2)
                 {
-                   // printf("32\n");
+                    //printf("HO:");
+                    pmyuv[n].slice(i,j,bs,bs) = mhor;
 
-                    mhor.copyTo(yuv[n].colRange(j,j+4).rowRange(i,i+4));
+                    //yuv_[n].colRange(j,j+bs).rowRange(i,i+bs) = mhor;
                 }
                 else if(min == 3)
                 {
+                   // printf("VE:");
                     //printf("33\n");
-
-                    mver.copyTo(yuv[n].colRange(j,j+4).rowRange(i,i+4));
+                    pmyuv[n].slice(i,j,bs,bs) = mver;
+                    //yuv_[n].colRange(j,j+bs).rowRange(i,i+bs) = mver;
                 }
-  */              //printf("34\n");
+                //printf("34\n");
 
+                IntegerTransform(n,i,j,0);
             }
 
     printf("I predictionending....\n");
+
+//    for(int i=0; i< 3; i++)
+//    {
+//        for(int ii=0; ii<yuv[i].rows; ii++)
+//        {
+//            for(int jj=0; jj<yuv[i].cols; jj++)
+//            {
+//                yuv_[i].at<float>(ii,jj)  = pmyuv[i][ii][jj];
+//                //printf("(%d,%f)\t", tmp[ii][jj], yuv_[i].at<float>(ii,jj));
+//            }
+//           //printf("\n");
+//        }
+
+//    }
+
+//    yuv_[0].convertTo(yuv[0], CV_8UC1);
+//    yuv_[1].convertTo(yuv[1], CV_8UC1);
+//    yuv_[2].convertTo(yuv[2], CV_8UC1);
+    //printfMat(intraPred[0], true);
+}
+
+void IFrame::Intra4x4PredictionInverse()
+{
+    int bs = 4;
+
+//    Mat yuv_[3];
+//    yuv[0].convertTo(yuv_[0], CV_32FC1);
+//    yuv[1].convertTo(yuv_[1], CV_32FC1);
+//    yuv[2].convertTo(yuv_[2], CV_32FC1);
+
+//    Matrix<1000,1000,int> myuv[3];
+//    for(int i=0; i< 3; i++)
+//    {
+//        //Matrix<1000,1,int> tmp(yuv[i].rows, yuv[i].cols);
+//        for(int ii=0; ii<yuv[i].rows; ii++)
+//        {
+//            for(int jj=0; jj<yuv[i].cols; jj++)
+//            {
+//                myuv[i][ii][jj] = (int)yuv_[i].at<float>(ii,jj);
+//                //printf("(%d,%f)\t", tmp[ii][jj], yuv_[i].at<float>(ii,jj));
+//            }
+//           //printf("\n");
+//        }
+//        //myuv[i] = tmp;
+//    }
+
+    for(int n=0; n<3;n++)
+        for(int i=0; i<yuv[n].rows; i+=bs)
+            for(int j=0; j<yuv[n].cols; j+=bs)
+            {
+                IntegerTransformInverse(n, i , j, 0);
+
+                if(intraPred[n].at<uchar>(i/bs,j/bs) == 0)
+                {
+//                    printf("\n Raw:\n");
+//                    for(int ii=0; ii<bs; ii++)
+//                    {
+//                        for(int jj=0; jj<bs; jj++)
+//                        {
+//                            printf("%d\t", pmyuv[n][i+ii][j+jj]);
+//                        }
+//                        printf("\n");
+//                    }
+                }
+                else if(intraPred[n].at<uchar>(i/bs,j/bs) == 1)
+                {
+                    assert(intraPred[n].at<uchar>(i/bs-1,j/bs)==5);
+                    assert(intraPred[n].at<uchar>(i/bs,j/bs-1)==5);
+
+                    int mean =0;
+                    for(int ii=0; ii<bs; ii++)
+                    {
+//                        int b = 15;
+//                        if(i/bs == b & j/bs == b && n==0)
+//                            printf("%d\t%d\t",pmyuv[n][i-1][j+ii], pmyuv[n][i+ii][j-1]);
+                        mean += pmyuv[n][i-1][j+ii];
+                        mean += pmyuv[n][i+ii][j-1];
+                    }
+
+                    mean = mean / (2*bs);
+
+//                    int b = 15;
+//                    if(i/bs == b & j/bs == b && n==0)
+//                        printf("\n**decoding B 5 : mean:%d \n", mean);
+
+                    for(int ii=0; ii<bs; ii++)
+                        for(int jj=0; jj<bs; jj++)
+                            pmyuv[n][i+ii][j+jj] += mean;
+
+                }
+                else if(intraPred[n].at<uchar>(i/bs,j/bs) == 2)
+                {
+                    for(int ii=0; ii<bs; ii++)
+                        for(int jj=0; jj<bs; jj++)
+                            pmyuv[n][i+ii][j+jj] += pmyuv[n][i+ii][j-1];
+                }
+                else if(intraPred[n].at<uchar>(i/bs,j/bs) == 3)
+                {
+                    for(int ii=0; ii<bs; ii++)
+                        for(int jj=0; jj<bs; jj++)
+                            pmyuv[n][i+ii][j+jj] += pmyuv[n][i-1][j+jj];
+                }
+
+                intraPred[n].at<uchar>(i/bs,j/bs) = 5;
+            }
+
+
+    for(int i=0; i< 3; i++)
+    {
+        for(int ii=0; ii<yuv[i].rows; ii++)
+        {
+            for(int jj=0; jj<yuv[i].cols; jj++)
+            {
+                yuv[i].at<uchar>(ii,jj)  = static_cast<unsigned char>(pmyuv[i][ii][jj]);
+                //printf("(%d,%f)\t", tmp[ii][jj], yuv_[i].at<float>(ii,jj));
+            }
+           //printf("\n");
+        }
+
+    }
+
+//    yuv_[0].convertTo(yuv[0], CV_8UC1);
+//    yuv_[1].convertTo(yuv[1], CV_8UC1);
+//    yuv_[2].convertTo(yuv[2], CV_8UC1);
+}
+
+
+void IFrame::IntegerTransform(int n, int i, int j, int QP)
+{
+    Matrix<4,4,int> c = Data(
+                1,  1,  1,  1,
+                2,  1, -1, -2,
+                1,  -1, -1, 1,
+                1,  -2, 2,  -1
+                );
+
+    Matrix<4,4, int> tmp = c*pmyuv[n].slice(i,j,4,4)*c.T();
+    pmyuv[n].slice(i,j,4,4)= tmp;
+
+}
+
+void IFrame::IntegerTransformInverse(int n, int i, int j, int QP)
+{
+    Matrix<4> c = Data(
+                1,  1,  1,  1,
+                1,  0.5,    -0.5,   -1,
+                1,  -1, -1, 1,
+                0.5,    -1, 1,  -0.5
+                );
+
+    //Matrix<4,4, int> d =
+    Matrix<4,4, int> tmp = c.T()*pmyuv[n].slice(i,j,4,4)*c;
+    pmyuv[n].slice(i,j,4,4) = tmp;
+}
+
+int IFrame::sumAbs(Matrix<4,4,int> &m)
+{
+    int sum=0;
+    for(int i=0; i<m.num_rows(); i++)
+        for(int j=0; j<m.num_cols(); j++)
+            sum += abs(m[i][j]);
+
+    return sum;
+}
+
+void IFrame::printfMat(Mat m, bool ischar)
+{
+    printf("\n Size : %d %d\n", m.rows, m.cols);
+    for(int i=0; i<m.rows; i++)
+    {
+        for(int j=0; j< m.cols; j++)
+            if(ischar)
+                printf("%u\t", m.at<uchar>(i,j));
+            else
+                printf("%f\t", m.at<float>(i,j));
+        printf("\n");
+    }
 }

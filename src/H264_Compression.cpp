@@ -39,7 +39,7 @@ void H264_Compression::Init(const char* file)
     IFrame * ifr = new IFrame();
     int n=0;
     Mat frame;
-    while(cap.read(frame) && n < 10)
+    while(cap.read(frame) && n < 100)
     {
 
         if(n <1000)
@@ -62,9 +62,10 @@ void H264_Compression::Init(const char* file)
     {
         iframes[i]->Convert2YUV();
         iframes[i]->Intra4x4Prediction();
-        //iframes[i]->Convert2RGB();
+        iframes[i]->Intra4x4PredictionInverse();
+        iframes[i]->Convert2RGB();
 
-        imshow("H264", iframes[i]->yuv[0]);
+        imshow("H264", iframes[i]->img);
 //        for(int ii=0; ii<4;ii++)
 //        {
 //            for(int jj=0; jj<4;jj++)

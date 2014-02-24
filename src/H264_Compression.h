@@ -15,7 +15,7 @@ private:
     void Init(const char* file);
 
     Mat frames[1000];
-    Vector<IFrame*> iframes;
+    cv::Vector<IFrame*> iframes;
     VideoCapture cap;
 
 };
