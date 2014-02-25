@@ -39,7 +39,7 @@ void H264_Compression::Init(const char* file)
 
     int n=0;
     Mat image;
-    while(cap.read(image) && n < 100)
+    while(cap.read(image) && n < 30)
     {
         Frame *frame;
         if(n%2 == 0)
@@ -67,9 +67,13 @@ void H264_Compression::Init(const char* file)
 
     for(int i=0; i<frames.size(); i+=1)
     {
-        IFrame::ChangeQP(val);
+        Frame::ChangeQP(val);
         frames[i]->EncodeDecode();
+//        printf("%d out of %d \n", i, frames.size());
+//    }
 
+//    for(int i=0; i<frames.size(); i+=1)
+//    {
         imshow("H264", *frames[i]->getImage());
 
         if(i<1000)

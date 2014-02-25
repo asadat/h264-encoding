@@ -16,6 +16,7 @@ IFrame::~IFrame()
 
 void IFrame::EncodeDecode()
 {
+    printf("I Frame....\n");
     Convert2YUV();
     Intra4x4Prediction();
     Intra4x4PredictionInverse();
@@ -214,10 +215,18 @@ void IFrame::Intra4x4Prediction()
                 }
                 //printf("34\n");
 
-                IntegerTransform(n,i,j,20);
-            }
+                if(n==0 && i==40 && j==40)
+                {
+                    for(int gi=0; gi<4; gi++)
+                    {
+                        for(int gj=0; gj<4; gj++)
+                            printf("\t%d\t",yuv_m[n][i+gi][j+gj]);
+                        printf("\n");
+                    }
+                }
 
-    printf("I predictionending....\n");
+                IntegerTransform(n,i,j);
+            }
 
 //    for(int i=0; i< 3; i++)
 //    {
@@ -268,7 +277,7 @@ void IFrame::Intra4x4PredictionInverse()
         for(int i=0; i<yuv[n].rows; i+=bs)
             for(int j=0; j<yuv[n].cols; j+=bs)
             {
-                IntegerTransformInverse(n, i , j, 20);
+                IntegerTransformInverse(n, i , j);
 
                 if(intraPred[n].at<uchar>(i/bs,j/bs) == 0)
                 {
@@ -333,6 +342,7 @@ void IFrame::Intra4x4PredictionInverse()
             {
                 int f = yuv_m[i][ii][jj];
                 f = (f<0)?0:((f>255)?255:f);
+                yuv_m[i][ii][jj] = f;
                 yuv[i].at<uchar>(ii,jj)  = static_cast<unsigned char>(f);
                 //printf("(%d,%f)\t", tmp[ii][jj], yuv_[i].at<float>(ii,jj));
             }

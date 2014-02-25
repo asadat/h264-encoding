@@ -131,8 +131,9 @@ void Frame::ChangeQP(int qp)
 
 }
 
-void Frame::IntegerTransform(int n, int i, int j, int QP)
+void Frame::IntegerTransform(int n, int i, int j)
 {
+    //printf("QP: %d\n", m_QP);
     Matrix<4,4,int> c = Data(
                 1,  1,  1,  1,
                 2,  1, -1, -2,
@@ -177,7 +178,7 @@ void Frame::IntegerTransform(int n, int i, int j, int QP)
       yuv_m[n].slice(i,j,4,4)= tmp;
 }
 
-void Frame::IntegerTransformInverse(int n, int i, int j, int QP)
+void Frame::IntegerTransformInverse(int n, int i, int j)
 {
     Matrix<4,4,double> c = Data(
                 1,      1,      1,      1,

@@ -12,6 +12,7 @@ PFrame::~PFrame()
 
 void PFrame::EncodeDecode()
 {
+    printf("P Frame....\n");
     Convert2YUV();
     ComputeMC_Diff_IntegerTransform();
     ComputeMC_Diff_IntegerTransformInverse();
@@ -25,12 +26,16 @@ void PFrame::ComputeMC_Diff_IntegerTransform()
         for(int i=0; i<yuv[n].rows; i+= bs)
             for(int j=0; j<yuv[n].cols; j+= bs)
             {
-                printf("here3 %d %d %d\n", n, i, j);
+                for(int ni=0; ni< 8; ni++)
+                    for(int nj=0; nj<8; nj++)
+                        yuv_m[n][i+ni][j+nj] = (int)yuv[n].at<uchar>(i+ni,j+nj);
+
+                //printf("here3 %d %d %d\n", n, i, j);
                 BlockMC_Diff(n,i,j);
                 //printf("here3.5 \n");
                 for(int ii=0;ii<2;ii++)
                     for(int jj=0;jj<2;jj++)
-                        IntegerTransform(n, i+ii*4, j+jj*4, m_QP);
+                        IntegerTransform(n, i+ii*4, j+jj*4);
                 //printf(" here4\n");
             }
 
@@ -47,30 +52,39 @@ void PFrame::ComputeMC_Diff_IntegerTransformInverse()
             {
                 for(int ii=0;ii<2;ii++)
                     for(int jj=0;jj<2;jj++)
-                        IntegerTransformInverse(n, i+ii*4, j+jj*4, m_QP);
+                        IntegerTransformInverse(n, i+ii*4, j+jj*4);
 
                 BlockMC_Diff_Inverse(n,i,j);
+
+                for(int ni=0; ni< 8; ni++)
+                    for(int nj=0; nj<8; nj++)
+                    {
+                        int f = yuv_m[n][i+ni][j+nj];
+                        f = (f<0)?0:((f>255)?255:f);
+                        yuv[n].at<uchar>(i+ni,j+nj)  = static_cast<unsigned char>(f);
+                    }
             }
 }
 
 
 void PFrame::BlockMC_Diff_Inverse(int n, int i, int j)
 {
-    int refi = mv[n][0][i/8][j/8];
-    int refj = mv[n][1][i/8][j/8];
+    int refi = mv_x[n][i/8][j/8];
+    int refj = mv_y[n][i/8][j/8];
 
-    yuv_m[n].slice(i,j,8,8) += refFrame->yuv_m[n].slice(refj,refj,8,8);
+    yuv_m[n].slice(i,j,8,8) += refFrame->yuv_m[n].slice(refi,refj,8,8);
 }
 
 void PFrame::BlockMC_Diff(int n, int i, int j)
 {
     int bs = 8;
-    int p = 8*2;
+    int p = 8*8;
     int minI = i;
     int minJ = j;
 
     for(;p>=1; p=ceil(p/2))
     {
+        //printf("11\n");
         double minMAD = 99999999999;
         int mini=-1;
         int minj=-1;
@@ -96,13 +110,28 @@ void PFrame::BlockMC_Diff(int n, int i, int j)
 
         minI = mini;
         minJ = minj;
+        //printf("22 minMAD: %f %d %d\n", minMAD, minI, minJ);
     }
 
-    //printf("1");
-    mv[n][0][i/8][j/8] = minI;
-    mv[n][0][i/8][j/8] = minJ;
-    yuv_m[n].slice(i,i,bs,bs) = yuv_m[n].slice(i,i,bs,bs) - refFrame->yuv_m[n].slice(minI,minJ,bs,bs);
-    //printf(" 2\n");
+    int mi = i/8;
+    int mj = j/8;
+    //if(n>1) printf("33: %d %d %d %d %d %d %d\n", n, i, j, minI, minJ, mi, mj);
+    mv_x[n][mi][mj] = minI;
+    //if(n>1) printf("44.1: %d %d %d %d %d %d %d\n", n, i, j, minI, minJ, mi, mj);
+    mv_y[n][mi][mj] = minJ;
+    //if(n>1) printf("44.2\n");
+    yuv_m[n].slice(i,j,bs,bs) = yuv_m[n].slice(i,j,bs,bs) - refFrame->yuv_m[n].slice(minI,minJ,bs,bs);
+
+    if(n==0 && i==40 && j==40)
+    {
+        for(int gi=0; gi<4; gi++)
+        {
+            for(int gj=0; gj<4; gj++)
+                printf("\t%d\t",yuv_m[n][i+gi][j+gj]);
+            printf("\n");
+        }
+    }
+    //printf("44\n");
 
 }
 

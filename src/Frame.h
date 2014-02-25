@@ -16,8 +16,8 @@ public:
     void Convert2YUV();
     void Convert2RGB();
 
-    void IntegerTransform(int n, int i, int j, int QP);
-    void IntegerTransformInverse(int n, int i, int j, int QP);
+    void IntegerTransform(int n, int i, int j);
+    void IntegerTransformInverse(int n, int i, int j);
 
     void SetImage(Mat &image);
     Mat * getImage(){return &img;}

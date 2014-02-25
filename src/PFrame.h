@@ -25,5 +25,6 @@ private:
     void ComputeMC_Diff_IntegerTransform();
     void ComputeMC_Diff_IntegerTransformInverse();
 
-    Matrix<1000,1000,int> mv[2][2];
+    Matrix<1000,1000,int> mv_x[3];
+    Matrix<1000,1000,int> mv_y[3];
 };
