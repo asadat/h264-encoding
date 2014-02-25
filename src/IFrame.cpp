@@ -4,29 +4,9 @@
 
 using namespace TooN;
 
-Matrix<4,4,float> IFrame::Mf;
-Matrix<4,4,float> IFrame::Vf;
 
-int IFrame::m_QP;
-
-Matrix<6,3,double> V = Data(10, 16, 13,
-                         11, 18, 14,
-                         13, 20, 16,
-                         14, 23, 18,
-                         16, 25, 20,
-                         18, 29, 23);
-
-Matrix<6,3,double> M = Data(13107, 5243, 8066,
-                         11916, 4660, 7490,
-                         10082, 4194, 6554,
-                         9363 , 3647, 5825,
-                         8192 , 3355, 5243,
-                         7282 , 2893, 4559);
-
-IFrame::IFrame(): nextIF(NULL), previousIF(NULL)
+IFrame::IFrame():Frame()
 {
-    m_QP =5;
-    ChangeQP(m_QP);
 }
 
 IFrame::~IFrame()
@@ -34,58 +14,12 @@ IFrame::~IFrame()
 
 }
 
-void IFrame::Convert2RGB()
+void IFrame::EncodeDecode()
 {
-    double chrs = 2;
-    Mat yuv1 = Mat::zeros(img.rows, img.cols, CV_8UC1);
-    Mat yuv2 = Mat::zeros(img.rows, img.cols, CV_8UC1);
-
-    resize(yuv[1], yuv1, Size(yuv1.cols, yuv1.rows), chrs, chrs, INTER_LINEAR);
-    resize(yuv[2], yuv2, Size(yuv2.cols, yuv2.rows), chrs, chrs, INTER_LINEAR);
-
-
-    for(int i=0; i<img.rows; i++)
-        for(int j=0; j<img.cols; j++)
-        {
-            img.at<Vec3b>(i,j)[0] = yuv[0].at<uchar>(i,j);
-            img.at<Vec3b>(i,j)[1] = yuv1.at<uchar>(i,j);
-            img.at<Vec3b>(i,j)[2] = yuv2.at<uchar>(i,j);
-        }
-
-    cvtColor(img, img, CV_YUV2RGB);
-}
-
-void IFrame::Convert2YUV()
-{
-    double chrs = 2;
-    yuv[0] = Mat::zeros(img.rows, img.cols, CV_8UC1);
-    yuv[1] = Mat::zeros(img.rows/chrs, img.cols/chrs, CV_8UC1);
-    yuv[2] = Mat::zeros(img.rows/chrs, img.cols/chrs, CV_8UC1);
-
-    Mat yuv1 = Mat::zeros(img.rows, img.cols, CV_8UC1);
-    Mat yuv2 = Mat::zeros(img.rows, img.cols, CV_8UC1);
-
-    cvtColor(img, img, CV_RGB2YUV);
-
-    for(int i=0; i<img.rows; i++)
-        for(int j=0; j<img.cols; j++)
-        {
-            yuv[0].at<uchar>(i,j) = img.at<Vec3b>(i,j)[0];
-            yuv1.at<uchar>(i,j) = img.at<Vec3b>(i,j)[1];
-            yuv2.at<uchar>(i,j) = img.at<Vec3b>(i,j)[2];
-        }
-
-    resize(yuv1, yuv[1], Size(yuv[1].cols, yuv[1].rows), 1/chrs, 1/chrs, INTER_LINEAR);
-    resize(yuv2, yuv[2], Size(yuv[2].cols, yuv[2].rows), 1/chrs, 1/chrs, INTER_LINEAR);
-}
-
-void IFrame::SetImage(Mat &image)
-{
-    double newc, newr;
-    newc = image.cols + 8-image.cols%8;
-    newr = image.rows + 8-image.rows%8;
-
-    resize(image, img, Size(newc, newr), newc/image.cols, newr/image.rows, INTER_NEAREST);
+    Convert2YUV();
+    Intra4x4Prediction();
+    Intra4x4PredictionInverse();
+    Convert2RGB();
 }
 
 void IFrame::Intra4x4Prediction()
@@ -95,7 +29,7 @@ void IFrame::Intra4x4Prediction()
 //    yuv[1].convertTo(yuv_[1], CV_32FC1);
 //    yuv[2].convertTo(yuv_[2], CV_32FC1);
 
-    Matrix<1000,1000,int> myuv[3];
+    Matrix<1500,1500,int> myuv[3];
 
 
     for(int i=0; i< 3; i++)
@@ -234,7 +168,7 @@ void IFrame::Intra4x4Prediction()
 //                        }
 //                    }
 
-                    pmyuv[n].slice(i,j,bs,bs) = myuv[n].slice(i,j,bs,bs);
+                    yuv_m[n].slice(i,j,bs,bs) = myuv[n].slice(i,j,bs,bs);
                 }
                 else if(min == 1)
                 {
@@ -257,7 +191,7 @@ void IFrame::Intra4x4Prediction()
 //                            pmyuv[n][i+iii][j+jjj] = mdc[iii][jjj];
 //                        }
 //                    }
-                    pmyuv[n].slice(i,j,bs,bs) = mdc;
+                    yuv_m[n].slice(i,j,bs,bs) = mdc;
                    // yuv_[n].colRange(j,j+bs).rowRange(i,i+bs) = mdc;
                     //yuv_[n].colRange(j,j+bs).rowRange(i,i+bs)= mdc;//Mat::zeros(bs,bs, CV_8UC1);
 
@@ -267,7 +201,7 @@ void IFrame::Intra4x4Prediction()
                 else if(min == 2)
                 {
                     //printf("HO:");
-                    pmyuv[n].slice(i,j,bs,bs) = mhor;
+                    yuv_m[n].slice(i,j,bs,bs) = mhor;
 
                     //yuv_[n].colRange(j,j+bs).rowRange(i,i+bs) = mhor;
                 }
@@ -275,7 +209,7 @@ void IFrame::Intra4x4Prediction()
                 {
                    // printf("VE:");
                     //printf("33\n");
-                    pmyuv[n].slice(i,j,bs,bs) = mver;
+                    yuv_m[n].slice(i,j,bs,bs) = mver;
                     //yuv_[n].colRange(j,j+bs).rowRange(i,i+bs) = mver;
                 }
                 //printf("34\n");
@@ -359,8 +293,8 @@ void IFrame::Intra4x4PredictionInverse()
 //                        int b = 15;
 //                        if(i/bs == b & j/bs == b && n==0)
 //                            printf("%d\t%d\t",pmyuv[n][i-1][j+ii], pmyuv[n][i+ii][j-1]);
-                        mean += pmyuv[n][i-1][j+ii];
-                        mean += pmyuv[n][i+ii][j-1];
+                        mean += yuv_m[n][i-1][j+ii];
+                        mean += yuv_m[n][i+ii][j-1];
                     }
 
                     mean = mean / (2*bs);
@@ -371,20 +305,20 @@ void IFrame::Intra4x4PredictionInverse()
 
                     for(int ii=0; ii<bs; ii++)
                         for(int jj=0; jj<bs; jj++)
-                            pmyuv[n][i+ii][j+jj] += mean;
+                            yuv_m[n][i+ii][j+jj] += mean;
 
                 }
                 else if(intraPred[n].at<uchar>(i/bs,j/bs) == 2)
                 {
                     for(int ii=0; ii<bs; ii++)
                         for(int jj=0; jj<bs; jj++)
-                            pmyuv[n][i+ii][j+jj] += pmyuv[n][i+ii][j-1];
+                            yuv_m[n][i+ii][j+jj] += yuv_m[n][i+ii][j-1];
                 }
                 else if(intraPred[n].at<uchar>(i/bs,j/bs) == 3)
                 {
                     for(int ii=0; ii<bs; ii++)
                         for(int jj=0; jj<bs; jj++)
-                            pmyuv[n][i+ii][j+jj] += pmyuv[n][i-1][j+jj];
+                            yuv_m[n][i+ii][j+jj] += yuv_m[n][i-1][j+jj];
                 }
 
                 intraPred[n].at<uchar>(i/bs,j/bs) = 5;
@@ -397,7 +331,7 @@ void IFrame::Intra4x4PredictionInverse()
         {
             for(int jj=0; jj<yuv[i].cols; jj++)
             {
-                int f = pmyuv[i][ii][jj];
+                int f = yuv_m[i][ii][jj];
                 f = (f<0)?0:((f>255)?255:f);
                 yuv[i].at<uchar>(ii,jj)  = static_cast<unsigned char>(f);
                 //printf("(%d,%f)\t", tmp[ii][jj], yuv_[i].at<float>(ii,jj));
@@ -410,124 +344,6 @@ void IFrame::Intra4x4PredictionInverse()
 //    yuv_[0].convertTo(yuv[0], CV_8UC1);
 //    yuv_[1].convertTo(yuv[1], CV_8UC1);
 //    yuv_[2].convertTo(yuv[2], CV_8UC1);
-}
-
-void IFrame::ChangeQP(int qp)
-{
-    int QP = qp;
-    m_QP = qp;
-    Mf = Data(
-                M[QP%6][0]/pow(2,floor(QP/6)), M[QP%6][2]/pow(2,floor(QP/6)), M[QP%6][0]/pow(2,floor(QP/6)), M[QP%6][2]/pow(2,floor(QP/6)),
-                M[QP%6][2]/pow(2,floor(QP/6)), M[QP%6][1]/pow(2,floor(QP/6)), M[QP%6][2]/pow(2,floor(QP/6)), M[QP%6][1]/pow(2,floor(QP/6)),
-                M[QP%6][0]/pow(2,floor(QP/6)), M[QP%6][2]/pow(2,floor(QP/6)), M[QP%6][0]/pow(2,floor(QP/6)), M[QP%6][2]/pow(2,floor(QP/6)),
-                M[QP%6][2]/pow(2,floor(QP/6)), M[QP%6][1]/pow(2,floor(QP/6)), M[QP%6][2]/pow(2,floor(QP/6)), M[QP%6][1]/pow(2,floor(QP/6))
-                );
-
-   Vf = Data(
-                V[QP%6][0]*pow(2,floor(QP/6)), V[QP%6][2]*pow(2,floor(QP/6)), V[QP%6][0]*pow(2,floor(QP/6)), V[QP%6][2]*pow(2,floor(QP/6)),
-                V[QP%6][2]*pow(2,floor(QP/6)), V[QP%6][1]*pow(2,floor(QP/6)), V[QP%6][2]*pow(2,floor(QP/6)), V[QP%6][1]*pow(2,floor(QP/6)),
-                V[QP%6][0]*pow(2,floor(QP/6)), V[QP%6][2]*pow(2,floor(QP/6)), V[QP%6][0]*pow(2,floor(QP/6)), V[QP%6][2]*pow(2,floor(QP/6)),
-                V[QP%6][2]*pow(2,floor(QP/6)), V[QP%6][1]*pow(2,floor(QP/6)), V[QP%6][2]*pow(2,floor(QP/6)), V[QP%6][1]*pow(2,floor(QP/6))
-                );
-
-}
-
-void IFrame::IntegerTransform(int n, int i, int j, int QP)
-{
-    Matrix<4,4,int> c = Data(
-                1,  1,  1,  1,
-                2,  1, -1, -2,
-                1,  -1, -1, 1,
-                1,  -2, 2,  -1
-                );
-
-
-
-
-    Matrix<4,4, int> tmp = (c*(pmyuv[n].slice(i,j,4,4)*c.T()));
-
-    for(int ii=0; ii<tmp.num_rows(); ii++)
-       for(int jj=0; jj<tmp.num_cols(); jj++)
-       {
-           int val = tmp[ii][jj]*Mf[ii][jj];
-           val = val >> 15;
-           tmp[ii][jj] = val;
-       }
-
-
-
-    if(false && n==1 && i/4==15 && j/4==15)
-    {
-        printf("\n Raw:\n");
-        for(int ii=0; ii<tmp.num_rows(); ii++)
-        {
-            for(int jj=0; jj<tmp.num_cols(); jj++)
-                printf("%d\t", pmyuv[n][i+ii][j+jj]);
-            printf("\n");
-        }
-
-        printf("\n Encoded:\n");
-        for(int ii=0; ii<tmp.num_rows(); ii++)
-        {
-            for(int jj=0; jj<tmp.num_cols(); jj++)
-                printf("%d\t", tmp[ii][jj]);
-            printf("\n");
-        }
-    }
-
-      pmyuv[n].slice(i,j,4,4)= tmp;
-}
-
-void IFrame::IntegerTransformInverse(int n, int i, int j, int QP)
-{
-    Matrix<4,4,double> c = Data(
-                1,      1,      1,      1,
-                1,      0.5,    -0.5,   -1,
-                1,      -1,     -1,     1,
-                0.5,    -1,     1,      -0.5
-                );
-
-
-    Matrix<4,4, float> tmp1;
-    for(int ii=0; ii<4; ii++)
-       for(int jj=0; jj<4; jj++)
-       {
-           tmp1[ii][jj] = pmyuv[n][i+ii][j+jj]*Vf[ii][jj];
-       }
-
-    Matrix<4,4, int> tmp = (1.0/64.0)*(c.T()*(tmp1*c));
-
-
-    pmyuv[n].slice(i,j,4,4) = tmp;
-
-    if(false && n==1 && i/4==15 && j/4==15)
-    {
-        printf("\n Decoded:\n");
-        for(int ii=0; ii<tmp.num_rows(); ii++)
-        {
-            for(int jj=0; jj<tmp.num_cols(); jj++)
-                printf("%d\t", tmp[ii][jj]);
-            printf("\n");
-        }
-
-        printf("\n Vf:\n");
-        for(int ii=0; ii<tmp.num_rows(); ii++)
-        {
-            for(int jj=0; jj<tmp.num_cols(); jj++)
-                printf("%f\t", Vf[ii][jj]);
-            printf("\n");
-        }
-    }
-}
-
-int IFrame::sumAbs(Matrix<4,4,int> &m)
-{
-    int sum=0;
-    for(int i=0; i<m.num_rows(); i++)
-        for(int j=0; j<m.num_cols(); j++)
-            sum += abs(m[i][j]);
-
-    return sum;
 }
 
 void IFrame::printfMat(Mat m, bool ischar)

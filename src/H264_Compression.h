@@ -1,5 +1,7 @@
 #include "opencv2/opencv.hpp"
 #include "IFrame.h"
+#include "PFrame.h"
+
 using namespace cv;
 
 
@@ -14,8 +16,8 @@ public:
 private:
     void Init(const char* file);
 
-    Mat frames[1000];
-    cv::Vector<IFrame*> iframes;
+    Mat images[1000];
+    cv::Vector<Frame*> frames;
     VideoCapture cap;
 
 };

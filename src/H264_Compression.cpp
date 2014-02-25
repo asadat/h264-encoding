@@ -7,10 +7,10 @@ H264_Compression::H264_Compression(const char* file)
 
 H264_Compression::~H264_Compression()
 {
-    while(!iframes.empty())
+    while(!frames.empty())
     {
-        IFrame* ifr = iframes.back();
-        iframes.pop_back();
+        Frame* ifr = frames.back();
+        frames.pop_back();
 
         delete ifr;
     }
@@ -33,50 +33,47 @@ void H264_Compression::Init(const char* file)
     namedWindow("H264", CV_WINDOW_AUTOSIZE | CV_GUI_NORMAL);
     namedWindow("raw", CV_WINDOW_AUTOSIZE | CV_GUI_NORMAL);
 
-   cv::createTrackbar("QP:", "H264", &val, 100);
+   cv::createTrackbar("QP:", "H264", &val, 40);
    //cv::createButton("button1", H264_Compression::playBtn,NULL);
 
-    IFrame * ifr = new IFrame();
+
     int n=0;
-    Mat frame;
-    while(cap.read(frame) && n < 100)
+    Mat image;
+    while(cap.read(image) && n < 100)
     {
+        Frame *frame;
+        if(n%2 == 0)
+        {
+            frame = new IFrame();
+        }
+        else
+        {
+            frame = new PFrame();
+            ((PFrame*)frame)->refFrame = frames.back();
+        }
 
         if(n <1000)
         {
-            frame.copyTo(frames[n]);
+            image.copyTo(images[n]);
             n++;
         }
 
-        ifr->SetImage(frame);
-        iframes.push_back(ifr);
-        ifr = new IFrame();
+        frame->SetImage(image);
+        frames.push_back(frame);
     }
 
-    delete ifr;
 
+    printf("%d %d frames.\n", frames.size(), n);
 
-    printf("%d %d frames.\n", iframes.size(), n);
-
-    for(int i=0; i<iframes.size(); i++)
+    for(int i=0; i<frames.size(); i+=1)
     {
         IFrame::ChangeQP(val);
-        iframes[i]->Convert2YUV();
-        iframes[i]->Intra4x4Prediction();
-        iframes[i]->Intra4x4PredictionInverse();
-        iframes[i]->Convert2RGB();
+        frames[i]->EncodeDecode();
 
-        imshow("H264", *iframes[i]->getImage());
-//        for(int ii=0; ii<4;ii++)
-//        {
-//            for(int jj=0; jj<4;jj++)
-//                printf("%d\t", iframes[i]->yuv[0].at<uchar>(4+ii,4+jj));
-
-//            printf("\n");
-//        }
+        imshow("H264", *frames[i]->getImage());
 
         if(i<1000)
-            imshow("raw", frames[i]);
+            imshow("raw", images[i]);
 
         if(waitKey(30) >= 0) break;
     }
