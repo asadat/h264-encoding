@@ -4,7 +4,6 @@
 #include "IFrame.h"
 
 using namespace TooN;
-using namespace cv;
 
 class PFrame: public Frame
 {
@@ -12,7 +11,9 @@ public:
     PFrame();
     ~PFrame();
 
-    void SetReferenceFrame(IFrame* refframe){refFrame = refframe;}
+    char TypeOfFrame(){return 'P';}
+
+    void SetReferenceFrame(Frame* refframe){refFrame = refframe;}
     void EncodeDecode();
     Frame *refFrame;
 
@@ -25,6 +26,6 @@ private:
     void ComputeMC_Diff_IntegerTransform();
     void ComputeMC_Diff_IntegerTransformInverse();
 
-    Matrix<1000,1000,int> mv_x[3];
-    Matrix<1000,1000,int> mv_y[3];
+    Matrix<1500,1500,int> mv_x[3];
+    Matrix<1500,1500,int> mv_y[3];
 };

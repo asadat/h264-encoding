@@ -3,6 +3,7 @@
 #include "TooN/TooN.h"
 
 using namespace TooN;
+using namespace cv;
 
 int Frame::m_QP;
 
@@ -27,9 +28,6 @@ Matrix<6,3,double> M = Data(13107, 5243, 8066,
 
 Frame::Frame(): nextF(NULL), previousF(NULL)
 {
-    m_QP =5;
-    ChangeQP(m_QP);
-
 }
 
 Frame::~Frame()
@@ -111,6 +109,7 @@ int Frame::sumAbs8x8(Matrix<8,8,int> &m)
     return sum;
 }
 
+
 void Frame::ChangeQP(int qp)
 {
     int QP = qp;
@@ -131,18 +130,15 @@ void Frame::ChangeQP(int qp)
 
 }
 
+
 void Frame::IntegerTransform(int n, int i, int j)
 {
-    //printf("QP: %d\n", m_QP);
     Matrix<4,4,int> c = Data(
                 1,  1,  1,  1,
                 2,  1, -1, -2,
                 1,  -1, -1, 1,
                 1,  -2, 2,  -1
                 );
-
-
-
 
     Matrix<4,4, int> tmp = (c*(yuv_m[n].slice(i,j,4,4)*c.T()));
 
@@ -153,27 +149,6 @@ void Frame::IntegerTransform(int n, int i, int j)
            val = val >> 15;
            tmp[ii][jj] = val;
        }
-
-
-
-    if(false && n==1 && i/4==15 && j/4==15)
-    {
-        printf("\n Raw:\n");
-        for(int ii=0; ii<tmp.num_rows(); ii++)
-        {
-            for(int jj=0; jj<tmp.num_cols(); jj++)
-                printf("%d\t", yuv_m[n][i+ii][j+jj]);
-            printf("\n");
-        }
-
-        printf("\n Encoded:\n");
-        for(int ii=0; ii<tmp.num_rows(); ii++)
-        {
-            for(int jj=0; jj<tmp.num_cols(); jj++)
-                printf("%d\t", tmp[ii][jj]);
-            printf("\n");
-        }
-    }
 
       yuv_m[n].slice(i,j,4,4)= tmp;
 }
@@ -199,23 +174,4 @@ void Frame::IntegerTransformInverse(int n, int i, int j)
 
 
     yuv_m[n].slice(i,j,4,4) = tmp;
-
-    if(false && n==1 && i/4==15 && j/4==15)
-    {
-        printf("\n Decoded:\n");
-        for(int ii=0; ii<tmp.num_rows(); ii++)
-        {
-            for(int jj=0; jj<tmp.num_cols(); jj++)
-                printf("%d\t", tmp[ii][jj]);
-            printf("\n");
-        }
-
-        printf("\n Vf:\n");
-        for(int ii=0; ii<tmp.num_rows(); ii++)
-        {
-            for(int jj=0; jj<tmp.num_cols(); jj++)
-                printf("%f\t", Vf[ii][jj]);
-            printf("\n");
-        }
-    }
 }

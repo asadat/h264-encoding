@@ -1,8 +1,11 @@
 #include "opencv2/opencv.hpp"
 #include "IFrame.h"
 #include "PFrame.h"
+#include "BFrame.h"
 
-using namespace cv;
+#include <vector>
+
+//using namespace cv;
 
 
 class H264_Compression
@@ -17,7 +20,7 @@ private:
     void Init(const char* file);
 
     Mat images[1000];
-    cv::Vector<Frame*> frames;
+    std::vector<Frame*> frames;
     VideoCapture cap;
 
 };

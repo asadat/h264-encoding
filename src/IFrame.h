@@ -18,7 +18,7 @@ public:
     void Intra4x4PredictionInverse();
 
     void EncodeDecode();
-
+    char TypeOfFrame(){return 'I';}
     void printfMat(Mat m, bool ischar=false);
 private:
 

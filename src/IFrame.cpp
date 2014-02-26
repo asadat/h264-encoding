@@ -18,9 +18,14 @@ void IFrame::EncodeDecode()
 {
     printf("I Frame....\n");
     Convert2YUV();
+    printf("I Frame Prediciton....\n");
     Intra4x4Prediction();
+    printf("I Frame prediction inverse....\n");
     Intra4x4PredictionInverse();
+    printf("I Frame rgb....\n");
     Convert2RGB();
+    printf("I Frame done....\n");
+
 }
 
 void IFrame::Intra4x4Prediction()
@@ -215,15 +220,15 @@ void IFrame::Intra4x4Prediction()
                 }
                 //printf("34\n");
 
-                if(n==0 && i==40 && j==40)
-                {
-                    for(int gi=0; gi<4; gi++)
-                    {
-                        for(int gj=0; gj<4; gj++)
-                            printf("\t%d\t",yuv_m[n][i+gi][j+gj]);
-                        printf("\n");
-                    }
-                }
+//                if(n==0 && i==40 && j==40)
+//                {
+//                    for(int gi=0; gi<4; gi++)
+//                    {
+//                        for(int gj=0; gj<4; gj++)
+//                            printf("\t%d\t",yuv_m[n][i+gi][j+gj]);
+//                        printf("\n");
+//                    }
+//                }
 
                 IntegerTransform(n,i,j);
             }

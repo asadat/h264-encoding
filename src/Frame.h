@@ -5,7 +5,7 @@
 #include "TooN/TooN.h"
 
 using namespace TooN;
-using namespace cv;
+
 
 class Frame
 {
@@ -16,11 +16,8 @@ public:
     void Convert2YUV();
     void Convert2RGB();
 
-    void IntegerTransform(int n, int i, int j);
-    void IntegerTransformInverse(int n, int i, int j);
-
-    void SetImage(Mat &image);
-    Mat * getImage(){return &img;}
+    void SetImage(cv::Mat &image);
+    cv::Mat * getImage(){return &img;}
 
     int sumAbs(Matrix<4,4,int> &m);
     int sumAbs8x8(Matrix<8,8,int> &m);
@@ -29,19 +26,27 @@ public:
 
     static void ChangeQP(int qp);
 
+
+    void IntegerTransform(int n, int i, int j);
+    void IntegerTransformInverse(int n, int i, int j);
+    virtual char TypeOfFrame()=0;
+
+    cv::Mat img;
 protected:
 
     static Matrix<4,4,float> Mf;
     static Matrix<4,4,float> Vf;
 
-    Mat img;
+
     Frame* nextF;
     Frame* previousF;
-    Mat yuv[3];
+    cv::Mat yuv[3];
     Matrix<1500,1500,int> yuv_m[3];
     static int m_QP;
 
     friend class PFrame;
+    friend class BFrame;
+
 };
 
 #endif
