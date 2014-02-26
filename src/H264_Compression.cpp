@@ -21,7 +21,7 @@ void H264_Compression::playBtn(int a, void * data)
 
 }
 
-int val=30;
+int val=0;
 void H264_Compression::Init(const char* file)
 {
 
@@ -61,66 +61,56 @@ void H264_Compression::Init(const char* file)
         Frame *frame[10];
         frame[0] = new IFrame();
         frame[0]->SetImage(images[i+0]);
-        Frame::ChangeQP(val);
         frame[0]->EncodeDecode();;
 
         frame[9] = new IFrame();
         frame[9]->SetImage(images[i+9]);
-        Frame::ChangeQP(val);
         frame[9]->EncodeDecode();;
 
         frame[3] = new PFrame();
         frame[3]->SetImage(images[i+3]);
         ((PFrame*)frame[3])->refFrame = frame[0];
-        Frame::ChangeQP(val);
         frame[3]->EncodeDecode();;
 
         frame[6] = new PFrame();
         frame[6]->SetImage(images[i+6]);
         ((PFrame*)frame[6])->refFrame = frame[3];
-        Frame::ChangeQP(val);
         frame[6]->EncodeDecode();;
 
         frame[1] = new BFrame();
         frame[1]->SetImage(images[i+1]);
         ((BFrame*)frame[1])->refFrame1 = frame[0];
         ((BFrame*)frame[1])->refFrame2 = frame[3];
-        Frame::ChangeQP(val);
         frame[1]->EncodeDecode();;
 
         frame[2] = new BFrame();
         frame[2]->SetImage(images[i+2]);
         ((BFrame*)frame[2])->refFrame1 = frame[0];
         ((BFrame*)frame[2])->refFrame2 = frame[3];
-        Frame::ChangeQP(val);
         frame[2]->EncodeDecode();;
 
         frame[4] = new BFrame();
         frame[4]->SetImage(images[i+4]);
         ((BFrame*)frame[4])->refFrame1 = frame[3];
         ((BFrame*)frame[4])->refFrame2 = frame[6];
-        Frame::ChangeQP(val);
         frame[4]->EncodeDecode();;
 
         frame[5] = new BFrame();
         frame[5]->SetImage(images[i+5]);
         ((BFrame*)frame[5])->refFrame1 = frame[3];
         ((BFrame*)frame[5])->refFrame2 = frame[6];
-        Frame::ChangeQP(val);
         frame[5]->EncodeDecode();;
 
         frame[7] = new BFrame();
         frame[7]->SetImage(images[i+7]);
         ((BFrame*)frame[7])->refFrame1 = frame[6];
         ((BFrame*)frame[7])->refFrame2 = frame[9];
-        Frame::ChangeQP(val);
         frame[7]->EncodeDecode();;
 
         frame[8] = new BFrame();
         frame[8]->SetImage(images[i+8]);
         ((BFrame*)frame[8])->refFrame1 = frame[6];
         ((BFrame*)frame[8])->refFrame2 = frame[9];
-        Frame::ChangeQP(val);
         frame[8]->EncodeDecode();;
 
         //for(int j=0; j<10; j++)
