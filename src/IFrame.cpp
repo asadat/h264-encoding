@@ -230,7 +230,27 @@ void IFrame::Intra4x4Prediction()
 //                    }
 //                }
 
+                if(n==1 && i == 64 && j == 64)
+                {
+                    printf("Before INT:\n");
+                    for(int ni=0; ni< 4; ni++)
+                    {
+                        for(int nj=0; nj<4; nj++)
+                            printf("%d\t", yuv_m[n][i+ni][j+nj]);
+                        printf("\n");
+                    }
+                }
                 IntegerTransform(n,i,j);
+                if(n==1 && i == 64 && j == 64)
+                {
+                    printf("After INT:\n");
+                    for(int ni=0; ni< 4; ni++)
+                    {
+                        for(int nj=0; nj<4; nj++)
+                            printf("%d\t", yuv_m[n][i+ni][j+nj]);
+                        printf("\n");
+                    }
+                }
             }
 
 //    for(int i=0; i< 3; i++)
@@ -283,6 +303,17 @@ void IFrame::Intra4x4PredictionInverse()
             for(int j=0; j<yuv[n].cols; j+=bs)
             {
                 IntegerTransformInverse(n, i , j);
+
+                if(n==1 && i == 64 && j == 64)
+                {
+                    printf("After INT Reverse:\n");
+                    for(int ni=0; ni< 4; ni++)
+                    {
+                        for(int nj=0; nj<4; nj++)
+                            printf("%d\t", yuv_m[n][i+ni][j+nj]);
+                        printf("\n");
+                    }
+                }
 
                 if(intraPred[n].at<uchar>(i/bs,j/bs) == 0)
                 {

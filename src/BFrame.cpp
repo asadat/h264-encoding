@@ -96,71 +96,96 @@ void BFrame::BlockMC_Diff_Inverse(int n, int i, int j)
 void BFrame::BlockMC_Diff(int n, int i, int j)
 {
     int bs = 8;
-    int p = 8*4;
+    int p = 7;
     int minI1 = i;
     int minJ1 = j;
 
     int minI2 = i;
     int minJ2 = j;
 
-    for(;p>=1; p=ceil(p/2))
-    {
-        //printf("11\n");
-        double minMAD1 = 99999999999;
-        int mini1=-1;
-        int minj1=-1;
-
-        double minMAD2 = 99999999999;
-        int mini2=-1;
-        int minj2=-1;
-
-        for(int ii=-1; ii<=1; ii++)
-            for(int jj=-1; jj<=1; jj++)
-            {
-                int refi1 = minI1+ii*ceil(p/2);
-                int refj1 = minJ1+jj*ceil(p/2);
-
-                int refi2 = minI2+ii*ceil(p/2);
-                int refj2 = minJ2+jj*ceil(p/2);
-
-                if(refi1 >=0 && refi1+7 < yuv[n].rows && refj1 >=0 && refj1+7 < yuv[n].cols)
-                {
-                    double MAD = GetMAD(1,n, i, j, refi1, refj1);
-                    if(MAD < minMAD1)
-                    {
-                        minMAD1 = MAD;
-                        mini1 = refi1;
-                        minj1 = refj1;
-                    }
-                }
-
-                if(refi2 >=0 && refi2+7 < yuv[n].rows && refj2 >=0 && refj2+7 < yuv[n].cols)
-                {
-                    double MAD = GetMAD(2,n, i, j, refi2, refj2);
-                    if(MAD < minMAD2)
-                    {
-                        minMAD2 = MAD;
-                        mini2 = refi2;
-                        minj2 = refj2;
-                    }
-                }
-            }
-
-        assert(mini1 >= 0 && mini1 < yuv[n].rows);
-        assert(minj1 >= 0 && minj1 < yuv[n].cols);
-        assert(mini2 >= 0 && mini2 < yuv[n].rows);
-        assert(minj2 >= 0 && minj2 < yuv[n].cols);
-
-        minI1 = mini1;
-        minJ1 = minj1;
-        minI2 = mini2;
-        minJ2 = minj2;
-
-        //printf("22 minMAD: %f %d %d\n", minMAD, minI, minJ);
-    }
-
     int mi = i/8;
     int mj = j/8;
+
+    if(n==0)
+    {
+        for(;p>=1; p=ceil(p/2))
+        {
+            //printf("11\n");
+            double minMAD1 = 99999999999;
+            int mini1=-1;
+            int minj1=-1;
+
+            double minMAD2 = 99999999999;
+            int mini2=-1;
+            int minj2=-1;
+
+            for(int ii=-1; ii<=1; ii++)
+                for(int jj=-1; jj<=1; jj++)
+                {
+                    int refi1 = minI1+ii*ceil(p/2);
+                    int refj1 = minJ1+jj*ceil(p/2);
+
+                    int refi2 = minI2+ii*ceil(p/2);
+                    int refj2 = minJ2+jj*ceil(p/2);
+
+                    if(refi1 >=0 && refi1+7 < yuv[n].rows && refj1 >=0 && refj1+7 < yuv[n].cols)
+                    {
+                        double MAD = GetMAD(1,n, i, j, refi1, refj1);
+                        if(MAD < minMAD1)
+                        {
+                            minMAD1 = MAD;
+                            mini1 = refi1;
+                            minj1 = refj1;
+                        }
+                    }
+
+                    if(refi2 >=0 && refi2+7 < yuv[n].rows && refj2 >=0 && refj2+7 < yuv[n].cols)
+                    {
+                        double MAD = GetMAD(2,n, i, j, refi2, refj2);
+                        if(MAD < minMAD2)
+                        {
+                            minMAD2 = MAD;
+                            mini2 = refi2;
+                            minj2 = refj2;
+                        }
+                    }
+                }
+
+            assert(mini1 >= 0 && mini1 < yuv[n].rows);
+            assert(minj1 >= 0 && minj1 < yuv[n].cols);
+            assert(mini2 >= 0 && mini2 < yuv[n].rows);
+            assert(minj2 >= 0 && minj2 < yuv[n].cols);
+
+            minI1 = mini1;
+            minJ1 = minj1;
+            minI2 = mini2;
+            minJ2 = minj2;
+
+            //printf("22 minMAD: %f %d %d\n", minMAD, minI, minJ);
+        }
+    }
+    else
+    {
+        minI1 = ceil(mv1_x[0][mi][mj]/2);
+        minJ1 = ceil(mv1_y[0][mi][mj]/2);
+
+        if(minI1 < 0) minI1 = 0;
+        if(minI1+7 >= yuv[n].rows) minI1 = yuv[n].rows-8;
+
+        if(minJ1 < 0) minJ1 = 0;
+        if(minJ1+7 >= yuv[n].cols) minJ1 = yuv[n].cols-8;
+
+        minI2 = ceil(mv2_x[0][mi][mj]/2);
+        minJ2 = ceil(mv2_x[0][mi][mj]/2);
+
+        if(minI2 < 0) minI2 = 0;
+        if(minI2+7 >= yuv[n].rows) minI2 = yuv[n].rows-8;
+
+        if(minJ2 < 0) minJ2 = 0;
+        if(minJ2+7 >= yuv[n].cols) minJ2 = yuv[n].cols-8;
+    }
+
+
     mv1_x[n][mi][mj] = minI1;
     mv1_y[n][mi][mj] = minJ1;
 

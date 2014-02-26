@@ -133,6 +133,9 @@ void Frame::ChangeQP(int qp)
 
 void Frame::IntegerTransform(int n, int i, int j)
 {
+//    if(TypeOfFrame() == 'P' || TypeOfFrame()=='B')
+//        return;
+
     Matrix<4,4,int> c = Data(
                 1,  1,  1,  1,
                 2,  1, -1, -2,
@@ -155,6 +158,9 @@ void Frame::IntegerTransform(int n, int i, int j)
 
 void Frame::IntegerTransformInverse(int n, int i, int j)
 {
+//    if(TypeOfFrame() == 'P' || TypeOfFrame()=='B')
+//        return;
+
     Matrix<4,4,double> c = Data(
                 1,      1,      1,      1,
                 1,      0.5,    -0.5,   -1,
