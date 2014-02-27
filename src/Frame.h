@@ -30,6 +30,7 @@ public:
     void IntegerTransform(int n, int i, int j);
     void IntegerTransformInverse(int n, int i, int j);
     virtual char TypeOfFrame()=0;
+    cv::Mat yuv[3];
 
     cv::Mat img;
 protected:
@@ -40,7 +41,6 @@ protected:
 
     Frame* nextF;
     Frame* previousF;
-    cv::Mat yuv[3];
     Matrix<1500,1500,int> yuv_m[3];
     static int m_QP;
 

@@ -112,6 +112,7 @@ int Frame::sumAbs8x8(Matrix<8,8,int> &m)
 
 void Frame::ChangeQP(int qp)
 {
+    printf("Changing quantizations.... ************************************\n ");
     int QP = qp;
     m_QP = qp;
     Mf = Data(
@@ -145,6 +146,17 @@ void Frame::IntegerTransform(int n, int i, int j)
 
     Matrix<4,4, int> tmp = (c*(yuv_m[n].slice(i,j,4,4)*c.T()));
 
+    if(n==1 && i == 64 && j == 64)
+    {
+        printf("QT INT:\n");
+        for(int ni=0; ni< 4; ni++)
+        {
+            for(int nj=0; nj<4; nj++)
+                printf("%f\t", Mf[ni][nj]);
+            printf("\n");
+        }
+    }
+
     for(int ii=0; ii<tmp.num_rows(); ii++)
        for(int jj=0; jj<tmp.num_cols(); jj++)
        {
@@ -168,6 +180,16 @@ void Frame::IntegerTransformInverse(int n, int i, int j)
                 0.5,    -1,     1,      -0.5
                 );
 
+    if(n==1 && i == 64 && j == 64)
+    {
+        printf("VT INT:\n");
+        for(int ni=0; ni< 4; ni++)
+        {
+            for(int nj=0; nj<4; nj++)
+                printf("%f\t", Vf[ni][nj]);
+            printf("\n");
+        }
+    }
 
     Matrix<4,4, float> tmp1;
     for(int ii=0; ii<4; ii++)

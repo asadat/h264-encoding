@@ -17,11 +17,6 @@ H264_Compression::~H264_Compression()
     }
 }
 
-void H264_Compression::playBtn(int a, void * data)
-{
-
-}
-
 void H264_Compression::Init(const char* file)
 {
 
@@ -58,6 +53,8 @@ void H264_Compression::Init(const char* file)
 
     for(int i=0; i<n; i+=10)
     {
+        Frame::ChangeQP(val);
+
         Frame *frame[10];
         frame[0] = new IFrame();
         frame[0]->SetImage(images[i+0]);
@@ -124,7 +121,9 @@ void H264_Compression::Init(const char* file)
             imshow("H264", frame[ii]->img);
             imshow("raw", images[i+ii]);
             Mat diff;
-            cv::absdiff(frame[ii]->img.rowRange(0,images[i+ii].rows).colRange(0,images[i+ii].cols), images[i+ii], diff);
+            vector<Mat> channels(3);
+            cv::split(images[i+ii], channels);
+            cv::absdiff(frame[ii]->yuv[0].rowRange(0,images[i+ii].rows).colRange(0,images[i+ii].cols), channels[0], diff);
             imshow("diff", diff);
             if(waitKey(1000) >= 0) break;
         }

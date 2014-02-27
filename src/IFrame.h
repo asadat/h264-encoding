@@ -15,7 +15,7 @@ public:
     ~IFrame();
 
     void Intra4x4Prediction();
-    void Intra4x4PredictionInverse();
+    void Intra4x4PredictionInverse(int n, int i, int j);
 
     void EncodeDecode();
     char TypeOfFrame(){return 'I';}

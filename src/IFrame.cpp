@@ -21,7 +21,7 @@ void IFrame::EncodeDecode()
     printf("I Frame Prediciton....\n");
     Intra4x4Prediction();
     printf("I Frame prediction inverse....\n");
-    Intra4x4PredictionInverse();
+    //Intra4x4PredictionInverse();
     printf("I Frame rgb....\n");
     Convert2RGB();
     printf("I Frame done....\n");
@@ -63,8 +63,8 @@ void IFrame::Intra4x4Prediction()
     intraPred[2] = Mat::zeros(yuv[2].rows/bs, yuv[2].cols/bs, CV_8UC1);
 
     for(int n =0; n<3; n++)
-        for(int i=0; i< yuv[n].rows; i+=bs)
-            for(int j=0; j< yuv[n].cols; j+=bs)
+        for(int i=0; i+3< yuv[n].rows; i+=bs)
+            for(int j=0; j+3< yuv[n].cols; j+=bs)
             {
                 bool hor=false, ver=false, dc = false;
 
@@ -73,7 +73,7 @@ void IFrame::Intra4x4Prediction()
                 if(i>0)
                     ver = true;
                 if(j>0)
-                    hor=true;
+                    hor = true;
 
                 int v_dc = 0;
                 int v_hor = 0;
@@ -81,14 +81,12 @@ void IFrame::Intra4x4Prediction()
 
                 int min=0;
 
-
                 Matrix<4,4,int> mdc,mver,mhor;
 
                 int mean =0;
-                //printf("1\n");
+
                 if(dc)
                 {
-
                     // printf("\n Mean start: ");
                     for(int ii=0; ii<bs; ii++)
                     {
@@ -251,6 +249,7 @@ void IFrame::Intra4x4Prediction()
                         printf("\n");
                     }
                 }
+                Intra4x4PredictionInverse(n,i,j);
             }
 
 //    for(int i=0; i< 3; i++)
@@ -273,7 +272,7 @@ void IFrame::Intra4x4Prediction()
     //printfMat(intraPred[0], true);
 }
 
-void IFrame::Intra4x4PredictionInverse()
+void IFrame::Intra4x4PredictionInverse(int n, int i, int j)
 {
     int bs = 4;
 
@@ -298,11 +297,11 @@ void IFrame::Intra4x4PredictionInverse()
 //        //myuv[i] = tmp;
 //    }
 
-    for(int n=0; n<3;n++)
-        for(int i=0; i<yuv[n].rows; i+=bs)
-            for(int j=0; j<yuv[n].cols; j+=bs)
-            {
-                IntegerTransformInverse(n, i , j);
+//    for(int n=0; n<3;n++)
+//        for(int i=0; i<yuv[n].rows; i+=bs)
+//            for(int j=0; j<yuv[n].cols; j+=bs)
+//            {
+               IntegerTransformInverse(n, i , j);
 
                 if(n==1 && i == 64 && j == 64)
                 {
@@ -335,18 +334,11 @@ void IFrame::Intra4x4PredictionInverse()
                     int mean =0;
                     for(int ii=0; ii<bs; ii++)
                     {
-//                        int b = 15;
-//                        if(i/bs == b & j/bs == b && n==0)
-//                            printf("%d\t%d\t",pmyuv[n][i-1][j+ii], pmyuv[n][i+ii][j-1]);
                         mean += yuv_m[n][i-1][j+ii];
                         mean += yuv_m[n][i+ii][j-1];
                     }
 
                     mean = mean / (2*bs);
-
-//                    int b = 15;
-//                    if(i/bs == b & j/bs == b && n==0)
-//                        printf("\n**decoding B 5 : mean:%d \n", mean);
 
                     for(int ii=0; ii<bs; ii++)
                         for(int jj=0; jj<bs; jj++)
@@ -367,29 +359,20 @@ void IFrame::Intra4x4PredictionInverse()
                 }
 
                 intraPred[n].at<uchar>(i/bs,j/bs) = 5;
-            }
+          //  }
 
 
-    for(int i=0; i< 3; i++)
-    {
-        for(int ii=0; ii<yuv[i].rows; ii++)
-        {
-            for(int jj=0; jj<yuv[i].cols; jj++)
+   // for(int i=0; i< 3; i++)
+        for(int ii=0; ii<bs; ii++)
+            for(int jj=0; jj<bs; jj++)
             {
-                int f = yuv_m[i][ii][jj];
+                int f = yuv_m[n][i+ii][j+jj];
                 f = (f<0)?0:((f>255)?255:f);
-                yuv_m[i][ii][jj] = f;
-                yuv[i].at<uchar>(ii,jj)  = static_cast<unsigned char>(f);
-                //printf("(%d,%f)\t", tmp[ii][jj], yuv_[i].at<float>(ii,jj));
+                yuv_m[n][i+ii][j+jj] = f;
+                yuv[n].at<uchar>(i+ii,j+jj)  = static_cast<unsigned char>(f);
             }
-           //printf("\n");
-        }
 
-    }
 
-//    yuv_[0].convertTo(yuv[0], CV_8UC1);
-//    yuv_[1].convertTo(yuv[1], CV_8UC1);
-//    yuv_[2].convertTo(yuv[2], CV_8UC1);
 }
 
 void IFrame::printfMat(Mat m, bool ischar)

@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 2.4.6 FATAL_ERROR)
 SET(ProjName h264)
 
 #include_directories("~/opencv-2.4.8/OpenCV-2.4.2/include")
-#include_directories("~/OpenCv-2.4.2/include")
+include_directories("~/OpenCv-2.4.2/include")
 include_directories("/opt/ros/fuerte/include/")
 include_directories(".")
 
@@ -12,7 +12,7 @@ include_directories(".")
 include_directories("./src")
 
 #link_directories("~/opencv-2.4.8/OpenCV-2.4.2/lib")
-#link_directories("~/OpenCv-2.4.2/lib")
+link_directories("~/OpenCv-2.4.2/lib")
 link_directories("/opt/ros/fuerte/lib/")
 
 #link_directories("/usr/lib")

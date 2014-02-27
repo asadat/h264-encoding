@@ -86,7 +86,7 @@ void PFrame::ComputeMC_Diff_IntegerTransformInverse()
 
                 if(n==1 && i == 64 && j == 64)
                 {
-                    printf("Before INT-Inverse:\n");
+                    printf("After INT-Inverse:\n");
                     for(int ni=0; ni< 4; ni++)
                     {
                         for(int nj=0; nj<4; nj++)
@@ -122,7 +122,7 @@ void PFrame::BlockMC_Diff_Inverse(int n, int i, int j)
 void PFrame::BlockMC_Diff(int n, int i, int j)
 {
     int bs = 8;
-    int p = 7;
+    int p = 8;
     int minI = i;
     int minJ = j;
     double minMAD = 0;
@@ -175,7 +175,6 @@ void PFrame::BlockMC_Diff(int n, int i, int j)
         if(minJ+7 >= yuv[n].cols) minJ = yuv[n].cols-8;
     }
 
-
     //if(n>1) printf("33: %d %d %d %d %d %d %d\n", n, i, j, minI, minJ, mi, mj);
     if(false && i>0 && j>0 && minMAD > 4)
     {
@@ -190,13 +189,12 @@ void PFrame::BlockMC_Diff(int n, int i, int j)
         Matrix<8,8,int> dif = yuv_m[n].slice(i,j,bs,bs) - refFrame->yuv_m[n].slice(minI,minJ,bs,bs);
         yuv_m[n].slice(i,j,bs,bs) = dif;
     }
-
 }
 
 double PFrame::GetMAD(int n, int i, int j, int refi, int refj)
 {
     Matrix<8,8,int> dif = yuv_m[n].slice(i,j,8,8) - refFrame->yuv_m[n].slice(refi,refj,8,8);
     double sum = sumAbs8x8(dif);
-    return sum/64;
+    return sum;
 }
 

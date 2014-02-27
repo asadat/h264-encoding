@@ -96,7 +96,7 @@ void BFrame::BlockMC_Diff_Inverse(int n, int i, int j)
 void BFrame::BlockMC_Diff(int n, int i, int j)
 {
     int bs = 8;
-    int p = 7;
+    int p = 8;
     int minI1 = i;
     int minJ1 = j;
 
